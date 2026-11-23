@@ -1,21 +1,10 @@
 import Mathlib
 import PEqualNP.Defs
 
-/-!
-# A NOT-free fan-in-two circuit for an edge function has a separating AND gate
-
-For an edge `u v` of `G`, feed the circuit the indicator of `u`, the indicator of `v`, and
-their pointwise OR. Without NOT gates, every wire is the OR of its values on the two
-indicators, unless some AND gate reads two wires that separate `u` from `v`. At the output the
-OR rule fails (the edge function is `true` on the pair and `false` on each singleton), so such
-an AND gate exists.
--/
-
 namespace PEqualNP.Outside.L_meta_201_aux
 
 open PEqualNP.CircuitLowerBounds
 
-/-- Run gates on a wire list: the fold inside `Circuit.wires`. -/
 def wiresFrom (gs : List Gate) (w : List Bool) : List Bool :=
   gs.foldl (fun w g => w ++ [g.op.eval (g.inputs.map fun i => w.getD i false)]) w
 
@@ -50,7 +39,6 @@ theorem getD_snoc (w : List Bool) (v : Bool) (i : ℕ) :
     simp only [List.length_append, List.length_singleton]
     omega
 
-/-- Wires `a` and `b` separate `u` from `v` (in one of the two orders). -/
 def Sep (Wu Wv : List Bool) (a b : ℕ) : Prop :=
   (Wu.getD a false = true ∧ Wv.getD a false = false ∧ Wv.getD b false = true ∧
       Wu.getD b false = false) ∨
@@ -71,7 +59,6 @@ theorem Sep_lt (wu wv : List Bool) (hvl : wv.length = wu.length) (a b : ℕ)
     have h2 : wv.getD b false = false := List.getD_eq_default _ _ (hvl ▸ hc')
     rcases h with ⟨-, -, h3, -⟩ | ⟨-, -, h3, -⟩ <;> simp_all
 
-/-- One AND/OR gate of fan-in at most two either respects the OR rule or is a separating AND. -/
 theorem gate_step (g : Gate) (hop : g.op = GateOp.and ∨ g.op = GateOp.or)
     (hlen : g.inputs.length ≤ 2) (wu wv wuv : List Bool) (hvl : wv.length = wu.length)
     (hinv : ∀ i, wuv.getD i false = (wu.getD i false || wv.getD i false)) :
@@ -94,7 +81,7 @@ theorem gate_step (g : Gate) (hop : g.op = GateOp.and ∨ g.op = GateOp.or)
       cases wu.getD a false <;> cases wv.getD a false <;> simp
   | [a, b], _ =>
     rcases hop with rfl | rfl
-    · -- AND gate
+    ·
       simp only [GateOp.eval, List.map_cons, List.map_nil, List.all_cons, List.all_nil, id,
         hinv]
       have key : ((wu.getD a false || wv.getD a false) && ((wu.getD b false || wv.getD b false)
@@ -108,15 +95,13 @@ theorem gate_step (g : Gate) (hop : g.op = GateOp.and ∨ g.op = GateOp.or)
       · right
         obtain ⟨ha, hb⟩ := Sep_lt wu wv hvl a b key
         exact ⟨trivial, a, b, rfl, ha, hb, key⟩
-    · -- OR gate
+    ·
       left
       simp only [GateOp.eval, List.map_cons, List.map_nil, List.any_cons, List.any_nil, id,
         hinv]
       cases wu.getD a false <;> cases wv.getD a false <;> cases wu.getD b false <;>
         cases wv.getD b false <;> simp
 
-/-- The main induction: either a separating AND gate exists, or the OR rule holds for every
-wire of the final wire lists. -/
 theorem main (gs : List Gate) : ∀ (wu wv wuv : List Bool),
     (∀ g ∈ gs, (g.op = GateOp.and ∨ g.op = GateOp.or) ∧ g.inputs.length ≤ 2) →
     wv.length = wu.length → wuv.length = wu.length →
@@ -137,7 +122,7 @@ theorem main (gs : List Gate) : ∀ (wu wv wuv : List Bool),
     have hok' : ∀ g' ∈ gs, (g'.op = GateOp.and ∨ g'.op = GateOp.or) ∧ g'.inputs.length ≤ 2 :=
       fun g' hg' => hok g' (List.mem_cons_of_mem _ hg')
     rcases gate_step g hg.1 hg.2 wu wv wuv hvl hinv with heq | ⟨hand, a, b, hin, ha, hb, hsep⟩
-    · -- the OR rule survives this gate
+    ·
       have hinv' : ∀ i, (wuv ++ [g.op.eval (g.inputs.map fun i => wuv.getD i false)]).getD i false
           = ((wu ++ [g.op.eval (g.inputs.map fun i => wu.getD i false)]).getD i false
             || (wv ++ [g.op.eval (g.inputs.map fun i => wv.getD i false)]).getD i false) := by
@@ -155,7 +140,7 @@ theorem main (gs : List Gate) : ∀ (wu wv wuv : List Bool),
         · simp only [List.length_append, List.length_singleton] at hb; omega
       · right
         exact hall
-    · -- this gate separates
+    ·
       left
       refine ⟨0, g, a, b, rfl, hand, hin, by simpa using ha, by simpa using hb, ?_⟩
       rw [wiresFrom_cons, wiresFrom_cons]
