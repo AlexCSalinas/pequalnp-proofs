@@ -1,26 +1,6 @@
 import Mathlib
 import PEqualNP.Defs
 
-/-!
-The bowtie graph on `Fin 5` (triangles `{0,1,2}` and `{0,3,4}` sharing `0`) has 6 edges and
-10 independent sets, hence 60 pairs `(e, I)`.  A rectangle `A i × B i` is labelled by a vertex
-`t i ∈ e \ I` for all its pairs.  We count the rectangles fibrewise over `t`.
-
-Writing `σ e I` for the unique rectangle containing `(e, I)`, let `E_x` (for `x = 1,…,4`) say
-that the four pairs forced to label `x`, namely `(0x, {0})` and the three pairs `(xy, I)` with
-`y ∈ I` (where `y` is the other vertex of the triangle of `x`), all lie in one rectangle.
-
-* `¬ E_x` gives two rectangles with label `x`.
-* `E_1 ∧ E_2` is impossible (both rectangles would contain `(12, {0})`); likewise `E_3 ∧ E_4`.
-* `E_x` gives two rectangles with label `0`: e.g. under `E_1` the pair `(01, {2})` has label 1,
-  so `(01, {1})` and `(02, {2})` are in different label-0 rectangles.
-* `E_x ∧ E_y` with `x ∈ {1,2}`, `y ∈ {3,4}` gives three label-0 rectangles, e.g. under
-  `E_1 ∧ E_3` the pairs `(01,{1,4})`, `(02,{2,4})`, `(03,{2,3})` are pairwise separated.
-
-Every label has at least one rectangle, and the four cases (no `E_x`; one `E_x`; one from each
-triangle) each give `1+8`, `2+1+6`, `3+2+4` rectangles, so `k ≥ 9`.
--/
-
 theorem PEqualNP.Outside.L_meta_159 :
     ∀ (k : ℕ) (A : Fin k → Finset (Sym2 (Fin 5))) (B : Fin k → Finset (Finset (Fin 5)))
     (t : Fin k → Fin 5),
@@ -41,13 +21,13 @@ theorem PEqualNP.Outside.L_meta_159 :
         (a = 0 ∧ b = 1) ∨ (a = 0 ∧ b = 2) ∨ (a = 1 ∧ b = 2) ∨
         (a = 0 ∧ b = 3) ∨ (a = 0 ∧ b = 4) ∨ (a = 3 ∧ b = 4)) with hG
   have hadj : ∀ a b : Fin 5, G.Adj a b ↔ _ := fun a b => SimpleGraph.fromRel_adj _ a b
-  -- A pair (edge s(a,b), independent set I) is admissible.
+
   have valid : ∀ (a b : Fin 5) (I : Finset (Fin 5)), G.Adj a b →
       (∀ u ∈ I, ∀ w ∈ I, ¬ G.Adj u w) →
       s(a, b) ∈ G.edgeFinset ∧ ∀ u ∈ I, ∀ w ∈ I, ¬ G.Adj u w := by
     intro a b I h1 h2
     exact ⟨by rw [SimpleGraph.mem_edgeFinset, SimpleGraph.mem_edgeSet]; exact h1, h2⟩
-  -- the 28 admissible pairs used below
+
   have v01_0 := valid 0 1 {0} (by rw [hadj]; decide) (by simp only [hadj]; decide)
   have v02_0 := valid 0 2 {0} (by rw [hadj]; decide) (by simp only [hadj]; decide)
   have v03_0 := valid 0 3 {0} (by rw [hadj]; decide) (by simp only [hadj]; decide)
@@ -76,14 +56,14 @@ theorem PEqualNP.Outside.L_meta_159 :
   have v03_23 := valid 0 3 {2, 3} (by rw [hadj]; decide) (by simp only [hadj]; decide)
   have v04_14 := valid 0 4 {1, 4} (by rw [hadj]; decide) (by simp only [hadj]; decide)
   have v04_24 := valid 0 4 {2, 4} (by rw [hadj]; decide) (by simp only [hadj]; decide)
-  -- the index function σ : pair ↦ its rectangle
+
   have hne : Nonempty (Fin k) := by
     obtain ⟨i, -⟩ := (hcov _ v01_0.1 _ v01_0.2).exists
     exact ⟨i⟩
   have hcov' : ∀ e ∈ G.edgeFinset, ∀ I : Finset (Fin 5), (∀ u ∈ I, ∀ w ∈ I, ¬ G.Adj u w) →
       ∃ i, (e ∈ A i ∧ I ∈ B i) ∧ ∀ j, (e ∈ A j ∧ I ∈ B j) → j = i := hcov
   choose! σ hσ hσu using hcov'
-  -- rectangle property: if (e,I) and (e',I') share a rectangle, so does (e,I')
+
   have rect : ∀ (e : Sym2 (Fin 5)) (I : Finset (Fin 5)) (e' : Sym2 (Fin 5)) (I' : Finset (Fin 5)),
       (e ∈ G.edgeFinset ∧ ∀ u ∈ I, ∀ w ∈ I, ¬ G.Adj u w) →
       (e' ∈ G.edgeFinset ∧ ∀ u ∈ I', ∀ w ∈ I', ¬ G.Adj u w) →
@@ -92,8 +72,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     refine (hσu e h.1 I' h'.2 (σ e I) ⟨(hσ e h.1 I h.2).1, ?_⟩).symm
     rw [heq]
     exact (hσ e' h'.1 I' h'.2).2
-  -- separation: if (e,I') lies in rectangle c and the label of c differs from that of (e,J),
-  -- then (e,J) and (e',I') are in different rectangles
+
   have sep : ∀ (e : Sym2 (Fin 5)) (J : Finset (Fin 5)) (e' : Sym2 (Fin 5)) (I' : Finset (Fin 5))
       (c : Fin k),
       (e ∈ G.edgeFinset ∧ ∀ u ∈ J, ∀ w ∈ J, ¬ G.Adj u w) →
@@ -124,7 +103,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     rcases h1 with h1 | h1
     · exact h1
     · exact absurd (by rw [h1]; exact hb) h2
-  -- labels of the 28 pairs
+
   have t01_0 := tvalL 0 1 {0} v01_0 (by decide)
   have t02_0 := tvalL 0 2 {0} v02_0 (by decide)
   have t03_0 := tvalL 0 3 {0} v03_0 (by decide)
@@ -153,7 +132,7 @@ theorem PEqualNP.Outside.L_meta_159 :
   have t03_23 := tvalR 0 3 {2, 3} v03_23 (by decide)
   have t04_14 := tvalR 0 4 {1, 4} v04_14 (by decide)
   have t04_24 := tvalR 0 4 {2, 4} v04_24 (by decide)
-  -- fibres of t
+
   have hsum : k = ∑ v : Fin 5, (Finset.univ.filter (fun i => t i = v)).card := by
     have := Finset.card_eq_sum_card_fiberwise (f := t) (s := Finset.univ) (t := Finset.univ)
       (fun x _ => Finset.mem_univ _)
@@ -169,14 +148,13 @@ theorem PEqualNP.Outside.L_meta_159 :
       i ≠ j → i ≠ l → j ≠ l →
       3 ≤ (Finset.univ.filter (fun i => t i = v)).card := fun v i j l hi hj hl hij hil hjl =>
     Finset.two_lt_card.mpr ⟨i, by simp [hi], j, by simp [hj], l, by simp [hl], hij, hil, hjl⟩
-  -- every label occurs
+
   have n0 := ge1 0 _ t01_1
   have n1 := ge1 1 _ t01_0
   have n2 := ge1 2 _ t02_0
   have n3 := ge1 3 _ t03_0
   have n4 := ge1 4 _ t04_0
-  -- E_x : the four pairs forced to label x lie in one rectangle
-  -- ¬ E_x gives two rectangles of label x
+
   have nE1 : ¬ (σ s(1, 2) {2} = σ s(0, 1) {0} ∧ σ s(1, 2) {2, 3} = σ s(0, 1) {0} ∧
       σ s(1, 2) {2, 4} = σ s(0, 1) {0}) → 2 ≤ (Finset.univ.filter (fun i => t i = 1)).card := by
     intro h
@@ -205,7 +183,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     exact h ⟨Classical.byContradiction fun hne => hlt (ge2 4 _ _ t34_3 t04_0 hne),
       Classical.byContradiction fun hne => hlt (ge2 4 _ _ t34_13 t04_0 hne),
       Classical.byContradiction fun hne => hlt (ge2 4 _ _ t34_23 t04_0 hne)⟩
-  -- E_1 and E_2 are incompatible (both rectangles contain (12,{0})); likewise E_3, E_4
+
   have E12 : σ s(1, 2) {2} = σ s(0, 1) {0} → σ s(1, 2) {1} = σ s(0, 2) {0} → False := by
     intro e1 e2
     have h1 := rect s(1, 2) {2} s(0, 1) {0} v12_2 v01_0 e1
@@ -220,7 +198,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     have h : t (σ s(3, 4) {4}) = t (σ s(3, 4) {3}) := by rw [← h1, h2]
     rw [t34_4, t34_3] at h
     exact absurd h (by decide)
-  -- E_x gives two rectangles of label 0
+
   have E1_0 : σ s(1, 2) {2} = σ s(0, 1) {0} →
       2 ≤ (Finset.univ.filter (fun i => t i = 0)).card := by
     intro e1
@@ -245,7 +223,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     apply ge2 0 _ _ t04_4 t03_3
     exact sep s(0, 4) {4} s(0, 3) {3} _ v04_4 v03_3
       (rect s(0, 4) {0} s(3, 4) {3} v04_0 v34_3 e4.symm) (by rw [t04_0, t04_4]; decide)
-  -- E_x ∧ E_y for x ∈ {1,2}, y ∈ {3,4} gives three rectangles of label 0
+
   have E13 : σ s(1, 2) {2, 3} = σ s(0, 1) {0} → σ s(1, 2) {2, 4} = σ s(0, 1) {0} →
       σ s(3, 4) {2, 4} = σ s(0, 3) {0} →
       3 ≤ (Finset.univ.filter (fun i => t i = 0)).card := by
@@ -298,7 +276,7 @@ theorem PEqualNP.Outside.L_meta_159 :
     · exact (sep s(0, 4) {1, 4} s(0, 2) {2, 3} _ v04_14 v02_23
         (rect s(0, 4) {0} s(3, 4) {2, 3} v04_0 v34_23 e4b.symm)
         (by rw [t04_0, t04_14]; decide)).symm
-  -- the count
+
   rw [hsum]
   by_cases e1 : σ s(1, 2) {2} = σ s(0, 1) {0} ∧ σ s(1, 2) {2, 3} = σ s(0, 1) {0} ∧
       σ s(1, 2) {2, 4} = σ s(0, 1) {0}
